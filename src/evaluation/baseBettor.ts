@@ -175,8 +175,9 @@ export abstract class BaseBettor {
     if (!this.bettingMarkets_.every((m) => oMarkets.includes(m))) {
       throw new ValueError("Odds data do not include selected betting markets.");
     }
-    const OSubset = selectColumns(OValidated, this.featureNamesOdds_);
-    const odds = toNumericMatrix(OSubset, this.featureNamesOdds_);
+    const oddsColNames = this.featureNamesOdds_ ?? this.getFeatureNamesOdds(OValidated);
+    const OSubset = selectColumns(OValidated, oddsColNames);
+    const odds = toNumericMatrix(OSubset, oddsColNames);
     const BPred = YProbaPred.map((row, i) =>
       row.map((p, j) => p * (odds[i]?.[j] ?? NaN) > 1),
     );

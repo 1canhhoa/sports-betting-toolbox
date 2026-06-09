@@ -1,6 +1,6 @@
 import { fetch } from "undici";
 import { parse } from "csv-parse/sync";
-import type { ParamGrid, Schema, Table } from "../types.js";
+import type { CellValue, OutputDef, ParamGrid, Schema, Table } from "../types.js";
 import { BaseDataLoader } from "./baseDataLoader.js";
 import { createTable, parameterGrid, parseDate } from "../utils/table.js";
 
@@ -37,7 +37,7 @@ const OUTPUTS = [
         return h === a;
       }),
   ],
-] as const;
+] as OutputDef[];
 
 async function fetchCsv(url: string): Promise<Record<string, string>[]> {
   const response = await fetch(url);
@@ -69,7 +69,7 @@ function recordsToTable(records: Record<string, string>[], fixtures: boolean): T
 
 export class SoccerDataLoader extends BaseDataLoader {
   static override SCHEMA: Schema = [];
-  static override OUTPUTS = OUTPUTS;
+  static override OUTPUTS: OutputDef[] = OUTPUTS;
   private cachedData: Table | null = null;
 
   constructor(paramGrid: ParamGrid | null = null) {
@@ -134,7 +134,7 @@ export class SoccerDataLoader extends BaseDataLoader {
 
 function concatTables(a: Table, b: Table): Table {
   const keys = new Set([...Object.keys(a.columns), ...Object.keys(b.columns)]);
-  const columns: Record<string, Array<string | number | boolean | null>> = {};
+  const columns: Record<string, CellValue[]> = {};
   const nA = a.index.length;
   const nB = b.index.length;
   for (const key of keys) {

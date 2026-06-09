@@ -30,7 +30,7 @@ function buildDummyData(): Table {
       odds__williamhill__home_win__full_time_goals: 2,
       odds__williamhill__draw__full_time_goals: 2,
       odds__williamhill__away_win__full_time_goals: 2,
-      odds__pinnacle__over_2.5__full_time_goals: null,
+      "odds__pinnacle__over_2.5__full_time_goals": null,
       fixtures: false,
     },
     {
@@ -48,7 +48,7 @@ function buildDummyData(): Table {
       odds__williamhill__home_win__full_time_goals: 1.5,
       odds__williamhill__draw__full_time_goals: null,
       odds__williamhill__away_win__full_time_goals: null,
-      odds__pinnacle__over_2.5__full_time_goals: null,
+      "odds__pinnacle__over_2.5__full_time_goals": null,
       fixtures: false,
     },
     {
@@ -66,7 +66,7 @@ function buildDummyData(): Table {
       odds__williamhill__home_win__full_time_goals: 3.5,
       odds__williamhill__draw__full_time_goals: 1.5,
       odds__williamhill__away_win__full_time_goals: null,
-      odds__pinnacle__over_2.5__full_time_goals: null,
+      "odds__pinnacle__over_2.5__full_time_goals": null,
       fixtures: false,
     },
     {
@@ -84,7 +84,7 @@ function buildDummyData(): Table {
       odds__williamhill__home_win__full_time_goals: 2.5,
       odds__williamhill__draw__full_time_goals: 2.5,
       odds__williamhill__away_win__full_time_goals: null,
-      odds__pinnacle__over_2.5__full_time_goals: null,
+      "odds__pinnacle__over_2.5__full_time_goals": null,
       fixtures: false,
     },
     {
@@ -102,7 +102,7 @@ function buildDummyData(): Table {
       odds__williamhill__home_win__full_time_goals: 2.0,
       odds__williamhill__draw__full_time_goals: null,
       odds__williamhill__away_win__full_time_goals: null,
-      odds__pinnacle__over_2.5__full_time_goals: null,
+      "odds__pinnacle__over_2.5__full_time_goals": null,
       fixtures: false,
     },
     {
@@ -120,7 +120,7 @@ function buildDummyData(): Table {
       odds__williamhill__home_win__full_time_goals: 3.0,
       odds__williamhill__draw__full_time_goals: null,
       odds__williamhill__away_win__full_time_goals: null,
-      odds__pinnacle__over_2.5__full_time_goals: null,
+      "odds__pinnacle__over_2.5__full_time_goals": null,
       fixtures: false,
     },
     {
@@ -138,7 +138,7 @@ function buildDummyData(): Table {
       odds__williamhill__home_win__full_time_goals: 2.0,
       odds__williamhill__draw__full_time_goals: null,
       odds__williamhill__away_win__full_time_goals: null,
-      odds__pinnacle__over_2.5__full_time_goals: null,
+      "odds__pinnacle__over_2.5__full_time_goals": null,
       fixtures: false,
     },
     {
@@ -156,7 +156,7 @@ function buildDummyData(): Table {
       odds__williamhill__home_win__full_time_goals: 4.0,
       odds__williamhill__draw__full_time_goals: null,
       odds__williamhill__away_win__full_time_goals: null,
-      odds__pinnacle__over_2.5__full_time_goals: null,
+      "odds__pinnacle__over_2.5__full_time_goals": null,
       fixtures: false,
     },
     {
@@ -174,7 +174,7 @@ function buildDummyData(): Table {
       odds__williamhill__home_win__full_time_goals: 3.5,
       odds__williamhill__draw__full_time_goals: 2.5,
       odds__williamhill__away_win__full_time_goals: 2.0,
-      odds__pinnacle__over_2.5__full_time_goals: null,
+      "odds__pinnacle__over_2.5__full_time_goals": null,
       fixtures: true,
     },
     {
@@ -192,7 +192,7 @@ function buildDummyData(): Table {
       odds__williamhill__home_win__full_time_goals: 2.5,
       odds__williamhill__draw__full_time_goals: 1.5,
       odds__williamhill__away_win__full_time_goals: 2.5,
-      odds__pinnacle__over_2.5__full_time_goals: null,
+      "odds__pinnacle__over_2.5__full_time_goals": null,
       fixtures: true,
     },
     {
@@ -210,7 +210,7 @@ function buildDummyData(): Table {
       odds__williamhill__home_win__full_time_goals: 2.5,
       odds__williamhill__draw__full_time_goals: 2.5,
       odds__williamhill__away_win__full_time_goals: 3.0,
-      odds__pinnacle__over_2.5__full_time_goals: null,
+      "odds__pinnacle__over_2.5__full_time_goals": null,
       fixtures: false,
     },
     {
@@ -228,7 +228,7 @@ function buildDummyData(): Table {
       odds__williamhill__home_win__full_time_goals: 2.5,
       odds__williamhill__draw__full_time_goals: 3.0,
       odds__williamhill__away_win__full_time_goals: 2.5,
-      odds__pinnacle__over_2.5__full_time_goals: null,
+      "odds__pinnacle__over_2.5__full_time_goals": null,
       fixtures: false,
     },
   ];
@@ -264,7 +264,7 @@ export class DummySoccerDataLoader extends BaseDataLoader {
     [`odds__pinnacle__over_${OVER_UNDER}__full_time_goals`, "float"],
   ];
 
-  static override OUTPUTS = [
+  static override OUTPUTS: import("../types.js").OutputDef[] = [
     [
       "output__home_win__full_time_goals",
       (t: Table) =>
@@ -310,7 +310,7 @@ export class DummySoccerDataLoader extends BaseDataLoader {
           return h + a < OVER_UNDER;
         }),
     ],
-  ] as const;
+  ] ;
 
   constructor(paramGrid: ParamGrid | null = null) {
     super(paramGrid);

@@ -43,7 +43,7 @@ export abstract class BaseDataLoader {
   fixturesData_?: FixturesData;
 
   static SCHEMA: Schema = [];
-  static OUTPUTS: OutputDef[] = [];
+  static OUTPUTS: readonly OutputDef[] = [];
 
   constructor(paramGrid: ParamGrid | null = null) {
     this.paramGrid = paramGrid;
@@ -144,7 +144,7 @@ export abstract class BaseDataLoader {
     const trainParams = uniqueParamRows(trainData, paramNames);
     for (const row of trainParams) {
       const match = fullGrid.some((allowed) =>
-        Object.entries(row).every(([k, v]) => allowed[k] === v),
+        Object.entries(allowed).every(([k, v]) => row[k] === v),
       );
       if (!match) {
         throw new ValueError("The raw data and available parameters are incompatible.");
