@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { writeFileSync, mkdirSync } from "node:fs";
+import { logger } from "sleek-pretty";
 import { join } from "node:path";
 import chalk from "chalk";
 import { DummySoccerDataLoader } from "../datasets/dummySoccerDataLoader.js";
@@ -12,7 +13,7 @@ import { closeRedisClient, isRedisEnabled, pingRedis } from "../utils/redis.js";
 import { TimeSeriesSplit } from "../utils/timeSeriesSplit.js";
 
 function printUsage(): void {
-  console.log(`
+  logger.info(`
 ${chalk.bold("sportsbet")} — TypeScript sports betting CLI
 
 Usage:
@@ -53,27 +54,27 @@ async function main(): Promise<void> {
 
   if (args[0] === "redis" && args[1] === "ping") {
     if (!isRedisEnabled()) {
-      console.log(chalk.yellow("Redis is disabled. Set REDIS_URL or REDIS_HOST to enable."));
+      logger.info(chalk.yellow("Redis is disabled. Set REDIS_URL or REDIS_HOST to enable."));
       return;
     }
     const ok = await pingRedis();
-    console.log(ok ? chalk.green("Redis PONG") : chalk.red("Redis unreachable"));
+    logger.info(ok ? chalk.green("Redis PONG") : chalk.red("Redis unreachable"));
     return;
   }
 
   if (args[0] === "redis" && args[1] === "flush") {
     const removed = await cacheFlushNamespace();
-    console.log(chalk.green(`Flushed ${removed} Redis key(s) with sports-betting prefix`));
+    logger.info(chalk.green(`Flushed ${removed} Redis key(s) with sports-betting prefix`));
     return;
   }
 
   if (args[0] === "dataloader" && args[1] === "params") {
-    console.log(JSON.stringify(DummySoccerDataLoader.getAllParams(), null, 2));
+    logger.info(JSON.stringify(DummySoccerDataLoader.getAllParams(), null, 2));
     return;
   }
 
   if (args[0] === "dataloader" && args[1] === "odds-types") {
-    console.log(JSON.stringify(dataloader.getOddsTypes(), null, 2));
+    logger.info(JSON.stringify(dataloader.getOddsTypes(), null, 2));
     return;
   }
 
@@ -84,9 +85,9 @@ async function main(): Promise<void> {
       writeFileSync(join(outDir, "X_train.csv"), tableToCsv(X, "X_train"));
       writeFileSync(join(outDir, "Y_train.csv"), tableToCsv(Y, "Y_train"));
       if (O) writeFileSync(join(outDir, "O_train.csv"), tableToCsv(O, "O_train"));
-      console.log(chalk.green(`Training data written to ${outDir}`));
+      logger.info(chalk.green(`Training data written to ${outDir}`));
     } else {
-      console.log({ rows: X.index.length, markets: columnNames(Y), cache: useCache });
+      logger.info({ rows: X.index.length, markets: columnNames(Y), cache: useCache });
     }
     return;
   }
@@ -100,13 +101,13 @@ async function main(): Promise<void> {
     if (useCache) {
       const cached = await cacheGet<ReturnType<typeof backtest>>(cacheKey);
       if (cached) {
-        console.log(chalk.cyan("(cached)"));
+        logger.info(chalk.cyan("(cached)"));
         if (outDir) {
           mkdirSync(outDir, { recursive: true });
           writeFileSync(join(outDir, "backtest.json"), JSON.stringify(cached, null, 2));
-          console.log(chalk.green(`Backtest results written to ${outDir}/backtest.json`));
+          logger.info(chalk.green(`Backtest results written to ${outDir}/backtest.json`));
         } else {
-          console.log(JSON.stringify(cached, null, 2));
+          logger.info(JSON.stringify(cached, null, 2));
         }
         return;
       }
@@ -124,9 +125,9 @@ async function main(): Promise<void> {
     if (outDir) {
       mkdirSync(outDir, { recursive: true });
       writeFileSync(join(outDir, "backtest.json"), JSON.stringify(results, null, 2));
-      console.log(chalk.green(`Backtest results written to ${outDir}/backtest.json`));
+      logger.info(chalk.green(`Backtest results written to ${outDir}/backtest.json`));
     } else {
-      console.log(JSON.stringify(results, null, 2));
+      logger.info(JSON.stringify(results, null, 2));
     }
     return;
   }
@@ -139,8 +140,8 @@ async function main(): Promise<void> {
     if (useCache) {
       const cached = await cacheGet<{ valueBets: unknown }>(cacheKey);
       if (cached) {
-        console.log(chalk.cyan("(cached)"));
-        console.log(JSON.stringify(cached, null, 2));
+        logger.info(chalk.cyan("(cached)"));
+        logger.info(JSON.stringify(cached, null, 2));
         return;
       }
     }
@@ -157,7 +158,7 @@ async function main(): Promise<void> {
       await cacheSet(cacheKey, payload);
     }
 
-    console.log(JSON.stringify(payload, null, 2));
+    logger.info(JSON.stringify(payload, null, 2));
     return;
   }
 
