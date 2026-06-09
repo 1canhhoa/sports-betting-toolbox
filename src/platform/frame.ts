@@ -1,5 +1,5 @@
-import type { CellValue, ColumnData, Table } from "../types.js";
-import { columnNames, isNull, rowCount } from "../types.js";
+import type { CellValue, ColumnData, Table } from "../registry/schema.js";
+import { columnNames, isNull, rowCount } from "../registry/schema.js";
 
 export function createTable(
   index: Date[],

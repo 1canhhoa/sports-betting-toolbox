@@ -6,9 +6,9 @@ import type {
   Schema,
   Table,
   TrainData,
-} from "../types.js";
-import { columnNames, isNull, rowCount } from "../types.js";
-import { checkScalar } from "../utils/validation.js";
+} from "../registry/schema.js";
+import { columnNames, isNull, rowCount } from "../registry/schema.js";
+import { checkScalar } from "../platform/validate.js";
 import {
   colsByPrefix,
   createTable,
@@ -27,7 +27,7 @@ import {
   sortByIndex,
   targetCols,
   todayUtc,
-} from "../utils/table.js";
+} from "../platform/frame.js";
 
 export abstract class BaseDataLoader {
   paramGrid: ParamGrid | null;

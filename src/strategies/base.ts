@@ -1,18 +1,18 @@
-import type { BoolMatrix, NumericMatrix, Table } from "../types.js";
-import { columnNames, rowCount } from "../types.js";
+import type { BoolMatrix, NumericMatrix, Table } from "../registry/schema.js";
+import { columnNames, rowCount } from "../registry/schema.js";
 import {
   checkConsistentLength,
   checkScalar,
   nanToNum,
   sumAxis,
-} from "../utils/validation.js";
+} from "../platform/validate.js";
 import {
   groupSumByDate,
   selectColumns,
   selectRows,
   toBoolMatrix,
   toNumericMatrix,
-} from "../utils/table.js";
+} from "../platform/frame.js";
 
 export const COMPLEMENTARY_EVENTS = [
   ["home_win__full_time_goals", "draw__full_time_goals", "away_win__full_time_goals"],

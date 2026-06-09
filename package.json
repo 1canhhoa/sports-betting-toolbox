@@ -1,5 +1,5 @@
 {
-  "name": "sports-betting",
+  "name": "sports-betting-toolbox",
   "version": "0.13.0",
   "private": true,
   "type": "module",
@@ -8,9 +8,9 @@
     "build": "npm run build:lib",
     "build:lib": "tsc -p tsconfig.lib.json",
     "typecheck": "tsc -p tsconfig.json",
-    "sportsbet": "tsx src/cli/main.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "toolbox": "tsx apps/toolbox-cli.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

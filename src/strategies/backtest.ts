@@ -1,9 +1,9 @@
-import type { Table } from "../types.js";
-import { rowCount } from "../types.js";
-import { checkConsistentLength } from "../utils/validation.js";
-import { selectRows, sortByIndex } from "../utils/table.js";
-import { TimeSeriesSplit } from "../utils/timeSeriesSplit.js";
-import type { BaseBettor } from "./baseBettor.js";
+import type { Table } from "../registry/schema.js";
+import { rowCount } from "../registry/schema.js";
+import { checkConsistentLength } from "../platform/validate.js";
+import { selectRows, sortByIndex } from "../platform/frame.js";
+import { TimeSeriesSplit } from "../platform/chrono.js";
+import type { BaseBettor } from "./base.js";
 
 export type BacktestRow = Record<string, string | number>;
 

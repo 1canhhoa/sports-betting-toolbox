@@ -1,5 +1,5 @@
-import type { Classifier, NumericMatrix, Table } from "../types.js";
-import { BaseBettor } from "./baseBettor.js";
+import type { Classifier, NumericMatrix, Table } from "../registry/schema.js";
+import { BaseBettor } from "./base.js";
 
 export class ClassifierBettor extends BaseBettor {
   classifier: Classifier;

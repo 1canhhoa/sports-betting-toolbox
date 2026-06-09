@@ -1,4 +1,4 @@
-import { CACHE_PREFIX } from "./cacheKeys.js";
+import { CACHE_PREFIX } from "./keys.js";
 import { getRedisClient } from "./redis.js";
 
 const DEFAULT_TTL_SEC = Number(process.env.REDIS_CACHE_TTL_SEC ?? 3600);

@@ -3,7 +3,7 @@ export {
   DummySoccerDataLoader,
   SoccerDataLoader,
   loadDataLoader,
-} from "./datasets/index.js";
+} from "./extractors/index.js";
 export {
   BaseBettor,
   ClassifierBettor,
@@ -11,8 +11,8 @@ export {
   backtest,
   saveBettor,
   loadBettor,
-} from "./evaluation/index.js";
-export type { BacktestRow } from "./evaluation/index.js";
+} from "./strategies/index.js";
+export type { BacktestRow } from "./strategies/index.js";
 export type {
   Param,
   ParamGrid,
@@ -20,20 +20,20 @@ export type {
   TrainData,
   FixturesData,
   Classifier,
-} from "./types.js";
+} from "./registry/schema.js";
 export {
   impliedProbability,
   isValueBet,
   expectedReturn,
   sharpeRatio,
-} from "./utils/betting.js";
-export { TimeSeriesSplit } from "./utils/timeSeriesSplit.js";
-export { getRedisClient, closeRedisClient, pingRedis, isRedisEnabled } from "./utils/redis.js";
+} from "./platform/edge.js";
+export { TimeSeriesSplit } from "./platform/chrono.js";
+export { getRedisClient, closeRedisClient, pingRedis, isRedisEnabled } from "./platform/cache/redis.js";
 export {
   cacheGet,
   cacheSet,
   cacheDelete,
   cacheFlushNamespace,
   isRedisConfigured,
-} from "./utils/redisCache.js";
-export { csvCacheKey, backtestCacheKey, valueBetsCacheKey } from "./utils/cacheKeys.js";
+} from "./platform/cache/store.js";
+export { csvCacheKey, backtestCacheKey, valueBetsCacheKey } from "./platform/cache/keys.js";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { DummySoccerDataLoader } from "../../src/datasets/dummySoccerDataLoader.js";
-import { OddsComparisonBettor } from "../../src/evaluation/oddsComparisonBettor.js";
-import { columnNames } from "../../src/types.js";
+import { DummySoccerDataLoader } from "../../src/extractors/dummySoccer.js";
+import { OddsComparisonBettor } from "../../src/strategies/oddsCompare.js";
+import { columnNames } from "../../src/registry/schema.js";
 
 describe("DummySoccerDataLoader", () => {
   it("extracts training data with williamhill odds", () => {

@@ -1,6 +1,6 @@
-import type { ParamGrid, Schema, Table } from "../types.js";
-import { BaseDataLoader } from "./baseDataLoader.js";
-import { createTable, parameterGrid, parseDate, todayUtc } from "../utils/table.js";
+import type { ParamGrid, Schema, Table } from "../registry/schema.js";
+import { BaseDataLoader } from "./base.js";
+import { createTable, parameterGrid, parseDate, todayUtc } from "../platform/frame.js";
 
 const OVER_UNDER = 2.5;
 
@@ -264,7 +264,7 @@ export class DummySoccerDataLoader extends BaseDataLoader {
     [`odds__pinnacle__over_${OVER_UNDER}__full_time_goals`, "float"],
   ];
 
-  static override OUTPUTS: import("../types.js").OutputDef[] = [
+  static override OUTPUTS: import("../registry/schema.js").OutputDef[] = [
     [
       "output__home_win__full_time_goals",
       (t: Table) =>

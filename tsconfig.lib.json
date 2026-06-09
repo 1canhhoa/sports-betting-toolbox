@@ -8,6 +8,10 @@
     "declarationMap": true,
     "verbatimModuleSyntax": false
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/cli/**"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "apps/**"
+  ]
 }

@@ -1,8 +1,8 @@
-import type { NumericMatrix, Table } from "../types.js";
-import { columnNames } from "../types.js";
-import { checkScalar } from "../utils/validation.js";
-import { rowMeans, selectColumns } from "../utils/table.js";
-import { BaseBettor } from "./baseBettor.js";
+import type { NumericMatrix, Table } from "../registry/schema.js";
+import { columnNames } from "../registry/schema.js";
+import { checkScalar } from "../platform/validate.js";
+import { rowMeans, selectColumns } from "../platform/frame.js";
+import { BaseBettor } from "./base.js";
 
 export class OddsComparisonBettor extends BaseBettor {
   oddsTypes: string[] | null;

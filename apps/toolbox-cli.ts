@@ -1,29 +1,32 @@
 #!/usr/bin/env node
 import { writeFileSync, mkdirSync } from "node:fs";
-import { logger } from "sleek-pretty";
 import { join } from "node:path";
 import chalk from "chalk";
-import { DummySoccerDataLoader } from "../datasets/dummySoccerDataLoader.js";
-import { OddsComparisonBettor, backtest } from "../evaluation/index.js";
-import type { Table } from "../types.js";
-import { columnNames } from "../types.js";
-import { backtestCacheKey, valueBetsCacheKey } from "../utils/cacheKeys.js";
-import { cacheFlushNamespace, cacheGet, cacheSet } from "../utils/redisCache.js";
-import { closeRedisClient, isRedisEnabled, pingRedis } from "../utils/redis.js";
-import { TimeSeriesSplit } from "../utils/timeSeriesSplit.js";
+import { DummySoccerDataLoader } from "../src/extractors/dummySoccer.js";
+import { OddsComparisonBettor, backtest } from "../src/strategies/index.js";
+import type { Table } from "../src/registry/schema.js";
+import { columnNames } from "../src/registry/schema.js";
+import { backtestCacheKey, valueBetsCacheKey } from "../src/platform/cache/keys.js";
+import { cacheFlushNamespace, cacheGet, cacheSet } from "../src/platform/cache/store.js";
+import { closeRedisClient, isRedisEnabled, pingRedis } from "../src/platform/cache/redis.js";
+import { TimeSeriesSplit } from "../src/platform/chrono.js";
+
+const logger = {
+  info: (msg: unknown) => console.log(typeof msg === "string" ? msg : JSON.stringify(msg, null, 2)),
+};
 
 function printUsage(): void {
   logger.info(`
-${chalk.bold("sportsbet")} — TypeScript sports betting CLI
+${chalk.bold("toolbox")} — Modular sports betting toolbox
 
 Usage:
-  npm run sportsbet -- dataloader params
-  npm run sportsbet -- dataloader odds-types
-  npm run sportsbet -- dataloader training [--out dir] [--no-cache]
-  npm run sportsbet -- bettor backtest [--out dir] [--no-cache]
-  npm run sportsbet -- bettor bet [--no-cache]
-  npm run sportsbet -- redis ping
-  npm run sportsbet -- redis flush
+  npm run toolbox -- data params
+  npm run toolbox -- data odds
+  npm run toolbox -- data export [--out dir] [--no-cache]
+  npm run toolbox -- strategy backtest [--out dir] [--no-cache]
+  npm run toolbox -- strategy picks [--no-cache]
+  npm run toolbox -- cache ping
+  npm run toolbox -- cache flush
 `);
 }
 
@@ -52,7 +55,7 @@ async function main(): Promise<void> {
   const outIdx = args.indexOf("--out");
   const outDir = outIdx >= 0 ? args[outIdx + 1] : null;
 
-  if (args[0] === "redis" && args[1] === "ping") {
+  if (args[0] === "cache" && args[1] === "ping") {
     if (!isRedisEnabled()) {
       logger.info(chalk.yellow("Redis is disabled. Set REDIS_URL or REDIS_HOST to enable."));
       return;
@@ -62,23 +65,23 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (args[0] === "redis" && args[1] === "flush") {
+  if (args[0] === "cache" && args[1] === "flush") {
     const removed = await cacheFlushNamespace();
-    logger.info(chalk.green(`Flushed ${removed} Redis key(s) with sports-betting prefix`));
+    logger.info(chalk.green(`Flushed ${removed} Redis key(s) with sportsbet prefix`));
     return;
   }
 
-  if (args[0] === "dataloader" && args[1] === "params") {
+  if (args[0] === "data" && args[1] === "params") {
     logger.info(JSON.stringify(DummySoccerDataLoader.getAllParams(), null, 2));
     return;
   }
 
-  if (args[0] === "dataloader" && args[1] === "odds-types") {
+  if (args[0] === "data" && args[1] === "odds") {
     logger.info(JSON.stringify(dataloader.getOddsTypes(), null, 2));
     return;
   }
 
-  if (args[0] === "dataloader" && args[1] === "training") {
+  if (args[0] === "data" && args[1] === "export") {
     const [X, Y, O] = dataloader.extractTrainData(0, "williamhill");
     if (outDir) {
       mkdirSync(outDir, { recursive: true });
@@ -92,7 +95,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (args[0] === "bettor" && args[1] === "backtest") {
+  if (args[0] === "strategy" && args[1] === "backtest") {
     const oddsType = "williamhill";
     const alpha = 0.03;
     const splits = 2;
@@ -118,9 +121,7 @@ async function main(): Promise<void> {
     const bettor = new OddsComparisonBettor([oddsType], alpha);
     const results = backtest(bettor, X, Y, O, new TimeSeriesSplit(splits));
 
-    if (useCache) {
-      await cacheSet(cacheKey, results);
-    }
+    if (useCache) await cacheSet(cacheKey, results);
 
     if (outDir) {
       mkdirSync(outDir, { recursive: true });
@@ -132,7 +133,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (args[0] === "bettor" && args[1] === "bet") {
+  if (args[0] === "strategy" && args[1] === "picks") {
     const oddsType = "williamhill";
     const alpha = 0.03;
     const cacheKey = valueBetsCacheKey(oddsType, alpha);
@@ -154,10 +155,7 @@ async function main(): Promise<void> {
     const valueBets = bettor.bet(XFix, OFix);
     const payload = { valueBets };
 
-    if (useCache) {
-      await cacheSet(cacheKey, payload);
-    }
-
+    if (useCache) await cacheSet(cacheKey, payload);
     logger.info(JSON.stringify(payload, null, 2));
     return;
   }
