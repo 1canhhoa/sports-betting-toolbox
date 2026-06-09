@@ -1,3 +1,6 @@
+<img width="297" height="170" alt="download" src="https://github.com/user-attachments/assets/daf1ebd7-5a1f-4c92-900d-818fd71f028a" />
+
+
 # sports-betting-toolbox
 
 TypeScript sports betting toolbox for creating, testing, and using predictive betting models.
