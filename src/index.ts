@@ -28,3 +28,12 @@ export {
   sharpeRatio,
 } from "./utils/betting.js";
 export { TimeSeriesSplit } from "./utils/timeSeriesSplit.js";
+export { getRedisClient, closeRedisClient, pingRedis, isRedisEnabled } from "./utils/redis.js";
+export {
+  cacheGet,
+  cacheSet,
+  cacheDelete,
+  cacheFlushNamespace,
+  isRedisConfigured,
+} from "./utils/redisCache.js";
+export { csvCacheKey, backtestCacheKey, valueBetsCacheKey } from "./utils/cacheKeys.js";

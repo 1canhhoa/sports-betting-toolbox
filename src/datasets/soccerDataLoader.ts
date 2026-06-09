@@ -2,6 +2,8 @@ import { fetch } from "undici";
 import { parse } from "csv-parse/sync";
 import type { CellValue, OutputDef, ParamGrid, Schema, Table } from "../types.js";
 import { BaseDataLoader } from "./baseDataLoader.js";
+import { csvCacheKey } from "../utils/cacheKeys.js";
+import { cacheGet, cacheSet } from "../utils/redisCache.js";
 import { createTable, parameterGrid, parseDate } from "../utils/table.js";
 
 const TRAINING_URL =
@@ -39,12 +41,29 @@ const OUTPUTS = [
   ],
 ] as OutputDef[];
 
-async function fetchCsv(url: string): Promise<Record<string, string>[]> {
+async function fetchCsv(url: string, useCache = true): Promise<Record<string, string>[]> {
+  const cacheKey = csvCacheKey(url);
+
+  if (useCache) {
+    const cached = await cacheGet<string>(cacheKey);
+    if (cached) {
+      return parse(cached, { columns: true, skip_empty_lines: true, relax_column_count: true }) as Record<
+        string,
+        string
+      >[];
+    }
+  }
+
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.status}`);
   }
   const text = await response.text();
+
+  if (useCache) {
+    await cacheSet(cacheKey, text);
+  }
+
   return parse(text, { columns: true, skip_empty_lines: true, relax_column_count: true }) as Record<
     string,
     string

@@ -1,4 +1,4 @@
-# sports-betting
+# sports-betting-toolbox
 
 TypeScript sports betting toolbox for creating, testing, and using predictive betting models.
 
@@ -6,6 +6,7 @@ TypeScript sports betting toolbox for creating, testing, and using predictive be
 
 - **Dataloaders** — extract historical training data and fixtures (`DummySoccerDataLoader`, `SoccerDataLoader`)
 - **Bettors** — backtest strategies and find value bets (`OddsComparisonBettor`, `ClassifierBettor`)
+- **Redis cache** — optional Redis-backed caching for remote CSV fetches, backtests, and value bets (in-memory fallback)
 - **CLI** — command-line interface for data extraction and backtesting
 
 ## Quick start
@@ -47,7 +48,33 @@ npm run sportsbet -- dataloader training --out ./data
 
 # Run backtest
 npm run sportsbet -- bettor backtest --out ./results
+
+# Redis health check and cache flush
+npm run sportsbet -- redis ping
+npm run sportsbet -- redis flush
+
+# Bypass cache for a single command
+npm run sportsbet -- bettor backtest --no-cache
 ```
+
+### Redis
+
+Copy `.env.example` to `.env` and point `REDIS_URL` at your instance. When Redis is unavailable, the toolbox transparently falls back to an in-memory cache.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `REDIS_URL` | — | Full Redis connection URL |
+| `REDIS_HOST` | `127.0.0.1` | Host when URL not set |
+| `REDIS_PORT` | `6379` | Port when URL not set |
+| `REDIS_ENABLED` | `true` | Set `false` to force in-memory cache |
+| `REDIS_KEY_PREFIX` | `sportsbet:` | Namespace for cached keys |
+| `REDIS_CACHE_TTL_SEC` | `3600` | Default TTL in seconds |
+
+Cached data:
+
+- Remote soccer CSV downloads (`SoccerDataLoader`)
+- Backtest results (`bettor backtest`)
+- Value bet predictions (`bettor bet`)
 
 ## Development
 
