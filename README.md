@@ -1,3 +1,5 @@
+<img width="598" height="336" alt="download" src="https://github.com/user-attachments/assets/812aa544-e42a-4fb4-ad0b-421009f9a9ee" />
+
 # Sports Betting Toolbox
 
 A modular TypeScript toolkit for building and validating soccer betting models.
