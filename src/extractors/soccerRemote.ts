@@ -1,45 +1,16 @@
 import { fetch } from "undici";
-import { parse } from "csv-parse/sync";
-import type { CellValue, OutputDef, ParamGrid, Schema, Table } from "../registry/schema.js";
+import type { ParamGrid, Schema, Table } from "../registry/schema.js";
 import { BaseDataLoader } from "./base.js";
 import { csvCacheKey } from "../platform/cache/keys.js";
 import { cacheGet, cacheSet } from "../platform/cache/store.js";
-import { createTable, parameterGrid, parseDate } from "../platform/frame.js";
+import { parameterGrid, parseDate } from "../platform/frame.js";
+import { concatTables, parseCsvText, recordsToTable, withDateColumn } from "./csvTable.js";
+import { SOCCER_OUTPUTS } from "./soccerOutputs.js";
 
-const TRAINING_URL =
+export const TRAINING_URL =
   "https://raw.githubusercontent.com/georgedouzas/sports-betting/data/data/soccer/modelling/{league}_{division}_{year}.csv";
-const FIXTURES_URL =
+export const FIXTURES_URL =
   "https://raw.githubusercontent.com/georgedouzas/sports-betting/data/data/soccer/modelling/fixtures.csv";
-
-const OUTPUTS = [
-  [
-    "output__home_win__full_time_goals",
-    (t: Table) =>
-      t.index.map((_, i) => {
-        const h = Number(t.columns["target__home_team__full_time_goals"]?.[i]);
-        const a = Number(t.columns["target__away_team__full_time_goals"]?.[i]);
-        return h > a;
-      }),
-  ],
-  [
-    "output__away_win__full_time_goals",
-    (t: Table) =>
-      t.index.map((_, i) => {
-        const h = Number(t.columns["target__home_team__full_time_goals"]?.[i]);
-        const a = Number(t.columns["target__away_team__full_time_goals"]?.[i]);
-        return h < a;
-      }),
-  ],
-  [
-    "output__draw__full_time_goals",
-    (t: Table) =>
-      t.index.map((_, i) => {
-        const h = Number(t.columns["target__home_team__full_time_goals"]?.[i]);
-        const a = Number(t.columns["target__away_team__full_time_goals"]?.[i]);
-        return h === a;
-      }),
-  ],
-] as OutputDef[];
 
 async function fetchCsv(url: string, useCache = true): Promise<Record<string, string>[]> {
   const cacheKey = csvCacheKey(url);
@@ -47,10 +18,7 @@ async function fetchCsv(url: string, useCache = true): Promise<Record<string, st
   if (useCache) {
     const cached = await cacheGet<string>(cacheKey);
     if (cached) {
-      return parse(cached, { columns: true, skip_empty_lines: true, relax_column_count: true }) as Record<
-        string,
-        string
-      >[];
+      return parseCsvText(cached);
     }
   }
 
@@ -64,31 +32,12 @@ async function fetchCsv(url: string, useCache = true): Promise<Record<string, st
     await cacheSet(cacheKey, text);
   }
 
-  return parse(text, { columns: true, skip_empty_lines: true, relax_column_count: true }) as Record<
-    string,
-    string
-  >[];
-}
-
-function recordsToTable(records: Record<string, string>[], fixtures: boolean): Table {
-  const dates = records.map((r) => parseDate(r.date ?? "") ?? new Date(NaN));
-  const columns: Record<string, Array<string | number | boolean | null>> = { fixtures: [] };
-  const keys = Object.keys(records[0] ?? {}).filter((k) => k !== "date");
-  for (const key of keys) {
-    columns[key] = records.map((r) => {
-      const raw = r[key];
-      if (raw === undefined || raw === "" || raw === "-") return null;
-      const num = Number(raw);
-      return Number.isNaN(num) ? raw : num;
-    });
-  }
-  columns.fixtures = records.map(() => fixtures);
-  return createTable(dates, columns);
+  return parseCsvText(text);
 }
 
 export class SoccerDataLoader extends BaseDataLoader {
   static override SCHEMA: Schema = [];
-  static override OUTPUTS: OutputDef[] = OUTPUTS;
+  static override OUTPUTS = SOCCER_OUTPUTS;
   private cachedData: Table | null = null;
 
   constructor(paramGrid: ParamGrid | null = null) {
@@ -106,11 +55,15 @@ export class SoccerDataLoader extends BaseDataLoader {
     ]);
   }
 
-  async loadRemoteData(): Promise<Table> {
+  /** Download league CSVs and fixtures from the sports-betting data repository. */
+  async loadRemoteData(useCache = true): Promise<Table> {
     if (this.cachedData) return this.cachedData;
-    const params = this.paramGrid_ ?? SoccerDataLoader.getFullParamGrid();
+    this.checkParamGrid();
+    const params = this.paramGrid_;
     const frames: Table[] = [];
-    for (const p of params.slice(0, 3)) {
+    const errors: string[] = [];
+
+    for (const p of params) {
       const league = String(p.league ?? "England");
       const division = String(p.division ?? 1);
       const year = String(p.year ?? 2020);
@@ -118,49 +71,37 @@ export class SoccerDataLoader extends BaseDataLoader {
         .replace("{division}", division)
         .replace("{year}", year);
       try {
-        const records = await fetchCsv(url);
+        const records = await fetchCsv(url, useCache);
         if (records.length > 0) frames.push(recordsToTable(records, false));
-      } catch {
-        // skip unavailable league files
+      } catch (err) {
+        errors.push(`${league} div${division} ${year}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
+
     try {
-      const fixRecords = await fetchCsv(FIXTURES_URL);
+      const fixRecords = await fetchCsv(FIXTURES_URL, useCache);
       if (fixRecords.length > 0) frames.push(recordsToTable(fixRecords, true));
-    } catch {
-      // fixtures optional
+    } catch (err) {
+      errors.push(`fixtures: ${err instanceof Error ? err.message : String(err)}`);
     }
+
     if (frames.length === 0) {
-      throw new Error("Could not download soccer data from remote repository.");
+      const detail = errors.length ? ` Errors: ${errors.join("; ")}` : "";
+      throw new Error(`Could not download soccer data from remote repository.${detail}`);
     }
+
     let combined = frames[0]!;
     for (let i = 1; i < frames.length; i++) {
       combined = concatTables(combined, frames[i]!);
     }
-    combined = {
-      index: [...combined.index],
-      columns: { ...combined.columns, date: combined.index.map((d) => d) },
-    };
-    this.cachedData = combined;
-    return combined;
+    this.cachedData = withDateColumn(combined);
+    return this.cachedData;
   }
 
   getData(): Table {
     if (this.cachedData) return this.cachedData;
-    throw new Error("Call loadRemoteData() before using SoccerDataLoader in synchronous context.");
+    throw new Error(
+      "SoccerDataLoader: call loadRemoteData() first, or use createDataLoader({ source: 'remote' }).",
+    );
   }
-}
-
-function concatTables(a: Table, b: Table): Table {
-  const keys = new Set([...Object.keys(a.columns), ...Object.keys(b.columns)]);
-  const columns: Record<string, CellValue[]> = {};
-  const nA = a.index.length;
-  const nB = b.index.length;
-  for (const key of keys) {
-    columns[key] = [
-      ...(a.columns[key] ?? Array(nA).fill(null)),
-      ...(b.columns[key] ?? Array(nB).fill(null)),
-    ];
-  }
-  return createTable([...a.index, ...b.index], columns);
 }

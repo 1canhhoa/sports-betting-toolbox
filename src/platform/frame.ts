@@ -206,6 +206,9 @@ export function rowsMatchParams(
   data: Table,
   paramList: Array<Record<string, string | number | boolean | null>>,
 ): boolean[] {
+  if (paramList.length === 0) {
+    return data.index.map(() => true);
+  }
   return data.index.map((_, i) =>
     paramList.some((params) =>
       Object.entries(params).every(([key, value]) => data.columns[key]?.[i] === value),

@@ -2,7 +2,18 @@ export {
   BaseDataLoader,
   DummySoccerDataLoader,
   SoccerDataLoader,
+  CsvFileDataLoader,
+  createDataLoader,
+  loadMatchOddsData,
   loadDataLoader,
+  TRAINING_URL,
+  FIXTURES_URL,
+} from "./extractors/index.js";
+export type {
+  MatchOddsSource,
+  CreateDataLoaderOptions,
+  LoadMatchOddsOptions,
+  MatchOddsData,
 } from "./extractors/index.js";
 export {
   BaseBettor,
@@ -37,3 +48,20 @@ export {
   isRedisConfigured,
 } from "./platform/cache/store.js";
 export { csvCacheKey, backtestCacheKey, valueBetsCacheKey } from "./platform/cache/keys.js";
+export {
+  predictMatch,
+  buildMatchContext,
+  predictStatistical,
+  predictWithAi,
+  isAiModelAvailable,
+  teamsMatch,
+} from "./predict/index.js";
+export type {
+  MatchPrediction,
+  PredictMatchOptions,
+  PredictionModel,
+  MatchContext,
+  TeamRecord,
+  HeadToHeadRecord,
+  OutcomeRates,
+} from "./predict/index.js";

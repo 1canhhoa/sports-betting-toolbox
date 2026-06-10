@@ -128,8 +128,10 @@ export abstract class BaseDataLoader {
       }
     }
 
-    const ordered = schema.map(([c]) => c).filter((c) => c in data.columns);
-    data = selectColumns(data, [...ordered, "fixtures"]);
+    if (schema.length > 0) {
+      const ordered = schema.map(([c]) => c).filter((c) => c in data.columns);
+      data = selectColumns(data, [...ordered, "fixtures"]);
+    }
     data = setIndexFromColumn(data, "date");
     data = filterRows(
       data,
@@ -140,14 +142,16 @@ export abstract class BaseDataLoader {
     const trainMask = fixtures.map((f) => !f);
     const trainData = dropColumns(filterRows(data, trainMask), ["fixtures"]);
     const fullGrid = (this.constructor as typeof BaseDataLoader).getFullParamGrid();
-    const paramNames = [...new Set(fullGrid.flatMap((p) => Object.keys(p)))];
-    const trainParams = uniqueParamRows(trainData, paramNames);
-    for (const row of trainParams) {
-      const match = fullGrid.some((allowed) =>
-        Object.entries(allowed).every(([k, v]) => row[k] === v),
-      );
-      if (!match) {
-        throw new ValueError("The raw data and available parameters are incompatible.");
+    if (fullGrid.length > 0) {
+      const paramNames = [...new Set(fullGrid.flatMap((p) => Object.keys(p)))];
+      const trainParams = uniqueParamRows(trainData, paramNames);
+      for (const row of trainParams) {
+        const match = fullGrid.some((allowed) =>
+          Object.entries(allowed).every(([k, v]) => row[k] === v),
+        );
+        if (!match) {
+          throw new ValueError("The raw data and available parameters are incompatible.");
+        }
       }
     }
     return data;
@@ -330,6 +334,3 @@ function uniqueParamRows(
   return rows;
 }
 
-export async function loadDataLoader(_path: string): Promise<BaseDataLoader> {
-  throw new Error("loadDataLoader requires serialized bettor support (use JSON export in CLI).");
-}
