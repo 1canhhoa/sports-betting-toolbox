@@ -7,6 +7,7 @@ Predict soccer match outcomes from two team names using an **AI model**, backed 
 **Input:** home team + away team  
 **Output:** home win %, draw %, away win %, confidence, and AI reasoning
 
+https://github.com/user-attachments/assets/980afff7-64ce-4fe9-9bf9-372a53d52db3
 ## Setup (one time)
 
 ```bash
