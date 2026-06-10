@@ -3,12 +3,13 @@ import { createDataLoader } from "../extractors/loadMatchOdds.js";
 import { BaseDataLoader } from "../extractors/base.js";
 import { buildMatchContext } from "./teamContext.js";
 import { predictStatistical } from "./statistical.js";
-import { isAiModelAvailable, predictWithAi } from "./aiModel.js";
+import { aiSetupInstructions, isAiModelAvailable, predictWithAi } from "./aiModel.js";
+import { loadEnv } from "../config/env.js";
 
 export type PredictionModel = "ai" | "statistical";
 
 export interface PredictMatchOptions extends CreateDataLoaderOptions {
-  /** Prefer AI when OPENAI_API_KEY is set (default true). */
+  /** Use AI model (default true). Set false for statistical-only fallback. */
   useAi?: boolean;
 }
 
@@ -58,12 +59,17 @@ export async function predictMatch(
     throw new Error("predictMatch requires both home and away team names.");
   }
 
+  loadEnv();
   const loader = await createDataLoader(options);
   const context = buildMatchContext(homeTeam, awayTeam, rawTrainingTable(loader));
 
-  const useAi = options.useAi !== false && isAiModelAvailable();
+  const wantsAi = options.useAi !== false;
+  if (wantsAi && !isAiModelAvailable()) {
+    throw new Error(aiSetupInstructions());
+  }
+
   let reasoning: string | undefined;
-  const rates = useAi
+  const rates = wantsAi
     ? await predictWithAi(context).then((r) => {
         reasoning = r.reasoning;
         return r;
@@ -77,7 +83,7 @@ export async function predictMatch(
     draw: roundRate(rates.draw),
     awayWin: roundRate(rates.awayWin),
     confidence: roundRate(rates.confidence),
-    model: useAi ? "ai" : "statistical",
+    model: wantsAi ? "ai" : "statistical",
     resolvedHome: context.resolvedHome,
     resolvedAway: context.resolvedAway,
     context: {

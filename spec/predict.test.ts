@@ -21,6 +21,15 @@ describe("predictMatch", () => {
     expect(result.resolvedAway).toBe("Real Madrid");
   });
 
+  it("requires AI setup when useAi is true and no API key", async () => {
+    const prev = process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    await expect(
+      predictMatch("Arsenal", "Chelsea", { source: "dummy", useAi: true }),
+    ).rejects.toThrow(/OPENAI_API_KEY/);
+    if (prev) process.env.OPENAI_API_KEY = prev;
+  });
+
   it("returns normalized statistical rates from context", () => {
     const loader = new DummySoccerDataLoader();
     const data = loader.getData();

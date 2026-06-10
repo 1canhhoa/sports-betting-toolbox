@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { loadEnv } from "../src/config/env.js";
+loadEnv();
+
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import chalk from "chalk";
@@ -18,6 +21,7 @@ import { DummySoccerDataLoader } from "../src/extractors/dummySoccer.js";
 import { SoccerDataLoader } from "../src/extractors/soccerRemote.js";
 import type { Param } from "../src/registry/schema.js";
 import { predictMatch } from "../src/predict/matchPredictor.js";
+import { aiSetupInstructions, isAiModelAvailable } from "../src/predict/aiModel.js";
 
 const logger = {
   info: (msg: unknown) => console.log(typeof msg === "string" ? msg : JSON.stringify(msg, null, 2)),
@@ -40,11 +44,12 @@ function printUsage(): void {
   logger.info(`
 ${chalk.bold("toolbox")} — Soccer match prediction toolbox
 
-Primary workflow:
-  npm run toolbox -- predict <home-team> <away-team> [--source dummy|remote|file]
-  npm run toolbox -- predict --home Arsenal --away Chelsea [--no-ai]
+Primary workflow (AI model — requires OPENAI_API_KEY in .env):
+  npm run toolbox -- predict <home-team> <away-team>
+  npm run toolbox -- predict --home Arsenal --away Chelsea --source remote --league England --division 1 --year 2020
+  npm run toolbox -- predict Arsenal Chelsea --no-ai   # statistical fallback, no API key
 
-Output: home win %, draw %, away win %, and confidence (AI when OPENAI_API_KEY is set).
+Output: home win %, draw %, away win %, confidence, and AI reasoning.
 
 Other commands:
   npm run toolbox -- data load [--source dummy|remote|file] [--file path] [--odds-type name]
@@ -100,14 +105,23 @@ function parseParams(args: string[]): Param | undefined {
   return params;
 }
 
-function parseDataOptions(args: string[]) {
+function parseDataOptions(args: string[], defaults?: { source?: MatchOddsSource; params?: Param }) {
+  const hasSourceFlag = args.includes("--source");
+  const params = parseParams(args) ?? defaults?.params;
   return {
-    source: parseSource(args),
+    source: hasSourceFlag ? parseSource(args) : (defaults?.source ?? parseSource(args)),
     file: getFlagValue(args, "--file") ?? undefined,
-    params: parseParams(args),
+    params,
     useCache: !hasFlag(args, "--no-cache"),
     oddsType: getFlagValue(args, "--odds-type") ?? "williamhill",
   };
+}
+
+function parsePredictOptions(args: string[]) {
+  return parseDataOptions(args, {
+    source: "remote",
+    params: { league: "England", division: 1, year: 2020 },
+  });
 }
 
 function pct(rate: number): string {
@@ -126,11 +140,14 @@ async function main(): Promise<void> {
 
   if (args[0] === "predict") {
     const { home, away } = parsePredictTeams(args);
-    const dataOpts = parseDataOptions(args);
-    const result = await predictMatch(home, away, {
-      ...dataOpts,
-      useAi: !hasFlag(args, "--no-ai"),
-    });
+    const useAi = !hasFlag(args, "--no-ai");
+    if (useAi && !isAiModelAvailable()) {
+      console.error(chalk.red(aiSetupInstructions()));
+      process.exit(1);
+    }
+
+    const dataOpts = parsePredictOptions(args);
+    const result = await predictMatch(home, away, { ...dataOpts, useAi });
     logger.info({
       match: `${result.homeTeam} vs ${result.awayTeam}`,
       homeWin: pct(result.homeWin),
@@ -138,6 +155,7 @@ async function main(): Promise<void> {
       awayWin: pct(result.awayWin),
       confidence: pct(result.confidence),
       model: result.model,
+      aiModel: process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini",
       dataSource: dataOpts.source,
       resolvedTeams: {
         home: result.resolvedHome,

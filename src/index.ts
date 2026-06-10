@@ -54,6 +54,7 @@ export {
   predictStatistical,
   predictWithAi,
   isAiModelAvailable,
+  aiSetupInstructions,
   teamsMatch,
 } from "./predict/index.js";
 export type {
